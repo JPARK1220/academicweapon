@@ -10,33 +10,42 @@ client = OpenAI(
   api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
-def get_llm_response(topic, image_url):
-    completion = client.chat.completions.create(
-    extra_body={},
-    model=specialization.get_model(topic),
-    messages=[
+def get_llm_response(topic, image_urls):
+    # Create the base content with the prompt
+    content = [
         {
-        "role": "user",
-        "content": [
-            {
             "type": "text",
             "text": specialization.get_prompt(topic)
-            },
-            {
+        }
+    ]
+    
+    # Add each image URL to the content
+    for image_url in image_urls:
+        content.append({
             "type": "image_url",
             "image_url": {
                 "url": f"{image_url}"
             }
+        })
+
+    completion = client.chat.completions.create(
+        extra_body={},
+        model=specialization.get_model(topic),
+        messages=[
+            {
+                "role": "user",
+                "content": content
             }
         ]
-        }
-    ]
     )
 
     return completion.choices[0].message.content
 
 def test_get_llm_response():
-    print(get_llm_response("math", "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi3FSXq_G4_zb1brv1hMxUf6xdM3YS8vpQzz5Jpph-oesnGHbHhXDBcWuSV3EZEC3yLoalpmwXOvki5vwD3azLxF6HYFxZA1Vph-u6P81t6Z78ls6ZU6KEPa77stECI0MkNOOPjUjdHku0/s1600/problemsetA.jpg"))
+    print(get_llm_response(
+        "math", 
+        ["https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi3FSXq_G4_zb1brv1hMxUf6xdM3YS8vpQzz5Jpph-oesnGHbHhXDBcWuSV3EZEC3yLoalpmwXOvki5vwD3azLxF6HYFxZA1Vph-u6P81t6Z78ls6ZU6KEPa77stECI0MkNOOPjUjdHku0/s1600/problemsetA.jpg"]
+    ))
 
 if __name__ == "__main__":
     test_get_llm_response()

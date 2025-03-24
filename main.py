@@ -12,7 +12,7 @@ app = FastAPI(
 
 class ImageRequest(BaseModel):
     topic: str
-    image_url: str
+    image_urls: list[str]
     
 class ImageResponse(BaseModel):
     result: str
@@ -20,17 +20,17 @@ class ImageResponse(BaseModel):
 @app.post("/process-image", response_model=ImageResponse)
 async def process_image(request: ImageRequest):
     """
-    Process an image using the specialized LLM model.
+    Process multiple images using the specialized LLM model.
     
     Parameters:
     - topic: The topic/subject area for specialization (e.g., "math")
-    - image_url: URL of the image to process
+    - image_urls: List of URLs of the images to process
     
     Returns:
-    - result: The LLM's response to the image
+    - result: The LLM's response to the images
     """
     try:
-        result = get_llm_response(request.topic, request.image_url)
+        result = get_llm_response(request.topic, request.image_urls)
         return ImageResponse(result=result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

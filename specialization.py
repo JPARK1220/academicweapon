@@ -13,7 +13,7 @@ models = {
 }
 
 # Define the prompt template without f-string
-prompt_template = "You are an expert on {topic}. Answer the problem(s) in the following image."
+prompt_template = "You are an expert on {topic}. Answer the problem(s) in the following image(s)."
 
 def get_model(topic):
     return models[topic] if models[topic] else models["default"]
