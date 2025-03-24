@@ -3,7 +3,7 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from src.auth.router import router as auth_router
+from src.auth.router import auth_router
 
 from src.database import initialize_supabase
 from src.config import settings
