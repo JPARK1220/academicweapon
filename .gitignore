@@ -7,6 +7,9 @@
 !.env.example
 
 # Python virtual environment
+venv
 venv/
+.venv
+.venv/
 __pycache__/
 *.pyc 

@@ -2,5 +2,14 @@ python-dotenv
 requests
 openai
 fastapi
+sqlalchemy
+supabase
 uvicorn
+pymongo
+fastapi-jwt-auth
+alembic
+motor
+httpx
 pydantic
+email-validator
+
