@@ -11,3 +11,4 @@ alembic
 motor
 httpx
 pydantic
+email-validator
