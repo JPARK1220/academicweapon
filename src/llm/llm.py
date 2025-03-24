@@ -1,7 +1,9 @@
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-import specialization
+import utils
+
+# Todo: Seperate into Constants, Config, Utils later
 
 load_dotenv() 
 
@@ -15,7 +17,7 @@ def get_llm_response(topic, image_urls):
     content = [
         {
             "type": "text",
-            "text": specialization.get_prompt(topic)
+            "text": utils.get_prompt(topic)
         }
     ]
     
@@ -30,7 +32,7 @@ def get_llm_response(topic, image_urls):
 
     completion = client.chat.completions.create(
         extra_body={},
-        model=specialization.get_model(topic),
+        model=utils.get_model(topic),
         messages=[
             {
                 "role": "user",

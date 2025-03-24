@@ -25,9 +25,11 @@ async def not_found(request, exc):
 
 exception_handlers = {404: not_found}
 app = FastAPI(
-   exception_handlers=exception_handlers,
-   openapi_url="/openapi.json",
-   lifespan=lifespan
+  title="Academic Weapon API",
+  version="1.0",
+  exception_handlers=exception_handlers,
+  openapi_url="/openapi.json",
+  lifespan=lifespan
 )
 
 app.add_middleware(
@@ -42,6 +44,13 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "hello world"}
+
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint to verify API is running.
+    """
+    return {"status": "healthy"}
 
 app.include_router(
     auth_router,
