@@ -9,6 +9,8 @@ class Config(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
 
+    MONGODB_URI: str
+
     SITE_DOMAIN: str = "localhost.com"
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
 
