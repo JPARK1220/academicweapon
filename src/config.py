@@ -4,8 +4,12 @@ from pydantic_settings import BaseSettings
 from src.constants import Environment
 
 class Config(BaseSettings):
+    OPENROUTER_API_KEY: str
+
     SUPABASE_URL: str
     SUPABASE_KEY: str
+
+    MONGODB_URI: str
 
     SITE_DOMAIN: str = "localhost.com"
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
@@ -24,7 +28,7 @@ class Config(BaseSettings):
         env_file = ".env"
         case_sensitive = True
 
-
+    
 
 
 settings = Config()
