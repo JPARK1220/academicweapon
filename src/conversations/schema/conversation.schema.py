@@ -14,7 +14,7 @@ class Conversation(Document):
 
   # Add tokens used etc
 
-  # Array of messages (model) here
+  # Array of messages (schema) here
 
   # Add other parameters for settings, like temperature etc (see open router reference), additionally you can set max tokens
   settings = DictField(default={
