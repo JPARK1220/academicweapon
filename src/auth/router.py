@@ -26,7 +26,6 @@ class AuthRouter:
         return await self.auth_service.login(login_data)
     
     @router.post("/refresh", response_model=RefreshResponse)
-    @auth_guard
     async def refresh_token(
         self,
         refresh_data: RefreshRequest,
