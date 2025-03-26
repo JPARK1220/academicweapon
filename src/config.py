@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 
 from src.constants import Environment
 
+
 class Config(BaseSettings):
     OPENROUTER_API_KEY: str
 
@@ -17,8 +18,8 @@ class Config(BaseSettings):
     # SENTRY_DSN: str | None = None
 
     # Development Cors Settings
-    CORS_ORIGINS: list[str] = ['*']
-    CORS_HEADERS: list[str] = ['*']
+    CORS_ORIGINS: list[str] = ["*"]
+    CORS_HEADERS: list[str] = ["*"]
 
     # CORS_ORIGINS_REGEX: str | None = None
 
@@ -27,8 +28,6 @@ class Config(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
-
-    
 
 
 settings = Config()

@@ -3,9 +3,10 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from .auth.router import auth_router
-from .database import connect_mongodb, disconnect_mongodb, initialize_supabase
-from .config import settings
+from src.auth.router import router as auth_router
+from src.database import connect_mongodb, disconnect_mongodb, initialize_supabase
+from src.config import settings
+
 
 # Lifespan context manager
 @asynccontextmanager
@@ -17,20 +18,22 @@ async def lifespan(app: FastAPI):
     # Any actions needed on shutdown
     disconnect_mongodb()
 
+
 # FastAPI App Initialization
 async def not_found(request, exc):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
-        content={"detail": [{"msg": "API Route not found."}]}
+        content={"detail": [{"msg": "API Route not found."}]},
     )
+
 
 exception_handlers = {404: not_found}
 app = FastAPI(
-  title="Academic Weapon API",
-  version="1.0",
-  exception_handlers=exception_handlers,
-  openapi_url="/openapi.json",
-  lifespan=lifespan
+    title="Academic Weapon API",
+    version="1.0",
+    exception_handlers=exception_handlers,
+    openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -46,6 +49,7 @@ app.add_middleware(
 async def root():
     return {"message": "hello world"}
 
+
 @app.get("/health")
 async def health_check():
     """
@@ -53,11 +57,14 @@ async def health_check():
     """
     return {"status": "healthy"}
 
-app.include_router(
-    auth_router,
-    prefix="/auth",
-    tags=["Authentication"]
-)
+
+app.include_router(auth_router)
+
+print("All registered routes:")
+for route in app.routes:
+    if hasattr(route, "methods"):
+        methods = ', '.join(route.methods)
+        print(f"{methods:<20} {route.path}")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
