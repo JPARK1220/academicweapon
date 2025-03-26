@@ -12,13 +12,17 @@ class Conversation(Document):
   status = StringField(required=True, choices=['active', 'archived', 'deleted'], default='active')
   metadata = DictField()
 
-  # Add other parameters
+  # Add tokens used etc
+
+  # Array of messages (model) here
+
+  # Add other parameters for settings, like temperature etc (see open router reference), additionally you can set max tokens
   settings = DictField(default={
     'model': models.default,
   })
 
-  meta = {
-    'collection': 'conversations',
+  meta = { # Add compound indexes that are needed
+    'collection': 'conversations', # Name of collection
     'indexes': [
       'user_id',
       'status',
