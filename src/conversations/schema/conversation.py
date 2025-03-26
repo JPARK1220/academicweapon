@@ -1,8 +1,10 @@
-from mongoengine import Document, ObjectIdField, StringField, DateTimeField, DictField
+from mongoengine import Document, ObjectIdField, StringField, DateTimeField, DictField, ListField, EmbeddedDocumentField
 from datetime import datetime, timezone
 
 from conversations.constants import STANDARD_CHARS_REGEX
 from src.llm.utils import models
+from message import Message
+from settings import Settings
 
 class Conversation(Document):
   user_id = ObjectIdField(required=True)
@@ -15,11 +17,9 @@ class Conversation(Document):
   # Add tokens used etc
 
   # Array of messages (schema) here
-
+  messages = ListField(EmbeddedDocumentField(Message))
   # Add other parameters for settings, like temperature etc (see open router reference), additionally you can set max tokens
-  settings = DictField(default={
-    'model': models.default,
-  })
+  settings = EmbeddedDocumentField(Settings)
 
   meta = { # Add compound indexes that are needed
     'collection': 'conversations', # Name of collection
