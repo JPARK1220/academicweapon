@@ -3,24 +3,25 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from src.auth.router import auth_router
-
-from src.database import initialize_supabase
-from src.config import settings
+from .auth.router import auth_router
+from .database import connect_mongodb, disconnect_mongodb, initialize_supabase
+from .config import settings
 
 # Lifespan context manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize Supabase on startup
+    # Any startup initialization
     await initialize_supabase()
+    connect_mongodb()
     yield
-    # No cleanup needed for Supabase
+    # Any actions needed on shutdown
+    disconnect_mongodb()
 
 # FastAPI App Initialization
 async def not_found(request, exc):
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
-        content={"detail": [{"msg": "Not Found."}]}
+        content={"detail": [{"msg": "API Route not found."}]}
     )
 
 exception_handlers = {404: not_found}
@@ -31,6 +32,14 @@ app = FastAPI(
   openapi_url="/openapi.json",
   lifespan=lifespan
 )
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"], 
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 app.add_middleware(
     CORSMiddleware,
