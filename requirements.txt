@@ -11,5 +11,6 @@ alembic
 motor
 httpx
 pydantic
+pydantic-settings
 email-validator
 mongoengine 
