@@ -26,6 +26,8 @@ class Conversation(Document):
     'indexes': [
       'user_id',
       'status',
+      ('user_id', 'status'), 
+      ('user_id', '-created_at'),
     ]
   }
 
