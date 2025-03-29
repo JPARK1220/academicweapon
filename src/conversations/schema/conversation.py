@@ -1,9 +1,8 @@
-from mongoengine import Document, ObjectIdField, StringField, DateTimeField, DictField
+from mongoengine import Document, ObjectIdField, StringField, DateTimeField, DictField, ListField, EmbeddedDocumentField
 from datetime import datetime, timezone
 
 from conversations.constants import STANDARD_CHARS_REGEX
 from src.llm.utils import models
-
 
 class Conversation(Document):
     user_id = ObjectIdField(required=True)
