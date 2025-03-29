@@ -18,7 +18,6 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-
 class User(BaseModel):
     id: str
     email: Optional[str] = None

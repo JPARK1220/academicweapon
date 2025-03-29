@@ -2,7 +2,6 @@ python-dotenv
 requests
 openai
 fastapi
-fastapi-utils
 sqlalchemy
 supabase
 uvicorn
@@ -14,5 +13,5 @@ httpx
 pydantic
 pydantic-settings
 email-validator
-mongoengine 
 typing_inspect
+beanie

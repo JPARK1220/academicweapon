@@ -1,5 +1,7 @@
 from functools import wraps
 from fastapi import HTTPException, status, Request
+
+from src.auth.models import User
 from .dependencies import AuthDependencies
 
 
