@@ -1,4 +1,5 @@
-from pydantic import PostgresDsn, RedisDsn, model_validator
+import os
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 
 from src.constants import Environment
@@ -30,4 +31,7 @@ class Config(BaseSettings):
         case_sensitive = True
 
 
+
 settings = Config()
+print("Loaded MONGODB_URI from .env:", settings.MONGODB_URI)
+print("Actual value in os.environ:", os.getenv("MONGODB_URI"))

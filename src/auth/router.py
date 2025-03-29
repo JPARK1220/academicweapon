@@ -7,25 +7,25 @@ from fastapi_utils.cbv import cbv
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
-auth_service: AuthService = Depends(AuthDependencies.get_auth_service)
-
 @router.post("/signup", response_model=SignupResponse)
 async def signUp(
     user_data: UserSignup,
+    auth_service: AuthService = Depends(AuthDependencies.get_auth_service),
 ):
-    return await self.auth_service.signUp(user_data)
+    return await auth_service.signUp(user_data)
 
 @router.post("/login")
 async def login(
     login_data: LoginRequest,
+    auth_service: AuthService = Depends(AuthDependencies.get_auth_service),
 ):
-    return await self.auth_service.login(login_data)
+    return await auth_service.login(login_data)
 
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh_token(
     refresh_data: RefreshRequest,
 ):
-    return await self.auth_service.refresh_token(refresh_data)
+    return await auth_service.refresh_token(refresh_data)
 
 @router.get("/me")
 @auth_guard

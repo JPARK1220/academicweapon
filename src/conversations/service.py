@@ -25,7 +25,7 @@ class ConversationsService:
             messages=[message]
         )
 
-        conversation.save()
+        await conversation.save()
 
         return conversation
 
