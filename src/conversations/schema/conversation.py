@@ -1,42 +1,36 @@
-from mongoengine import Document, ObjectIdField, StringField, DateTimeField, DictField
+
+from mongoengine import Document, ObjectIdField, StringField, DateTimeField, DictField, ListField, EmbeddedDocumentField
 from datetime import datetime, timezone
 
 from conversations.constants import STANDARD_CHARS_REGEX
 from src.llm.utils import models
-
+from message import Message
+from settings import Settings
 
 class Conversation(Document):
-    user_id = ObjectIdField(required=True)
-    title = StringField(
-        required=True, min_length=4, max_length=32, regex=STANDARD_CHARS_REGEX
-    )
-    created_at = DateTimeField(default=datetime.now(timezone.utc))
-    updated_at = DateTimeField(default=datetime.now(timezone.utc))
-    status = StringField(
-        required=True, choices=["active", "archived", "deleted"], default="active"
-    )
-    metadata = DictField()
+  user_id = ObjectIdField(required=True)
+  title = StringField(required=True, min_length=4, max_length=32, regex=STANDARD_CHARS_REGEX)
+  created_at = DateTimeField(default=datetime.now(timezone.utc))
+  updated_at = DateTimeField(default=datetime.now(timezone.utc))
+  status = StringField(required=True, choices=['active', 'archived', 'deleted'], default='active')
+  metadata = DictField()
 
-    # Add tokens used etc
+  # Add tokens used etc
 
-    # Array of messages (schema) here
+  # Array of messages (schema) here
+  messages = ListField(EmbeddedDocumentField(Message))
+  # Add other parameters for settings, like temperature etc (see open router reference), additionally you can set max tokens
+  settings = EmbeddedDocumentField(Settings)
 
-    # Add other parameters for settings, like temperature etc (see open router reference), additionally you can set max tokens
-    settings = DictField(
-        default={
-            "model": models.default,
-        }
-    )
+  meta = { # Add compound indexes that are needed
+    'collection': 'conversations', # Name of collection
+    'indexes': [
+      'user_id',
+      'status',
+      ('user_id', 'status'), 
+      ('user_id', '-created_at'),
+    ]
+  }
 
-    meta = {  # Add compound indexes that are needed
-        "collection": "conversations",  # Name of collection
-        "indexes": [
-            "user_id",
-            "status",
-            ("user_id", "status"),
-            ("user_id", "-created_at"),
-        ],
-    }
-
-    def clean(self):
-        self.updated_at = datetime.now(timezone.utc)
+  def clean(self):
+    self.updated_at = datetime.now(timezone.utc)
