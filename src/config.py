@@ -33,5 +33,3 @@ class Config(BaseSettings):
 
 
 settings = Config()
-print("Loaded MONGODB_URI from .env:", settings.MONGODB_URI)
-print("Actual value in os.environ:", os.getenv("MONGODB_URI"))

@@ -1,48 +1,78 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List
 import re
 
 from src.conversations.constants import CONVERSATION_ROLES, STANDARD_CHARS_REGEX
-from src.llm.utils import models
+from src.llm.utils import Topic, models
 
 # Constants
 TITLE_REGEX = re.compile(STANDARD_CHARS_REGEX)
 
-class MessagesRequest(BaseModel):
-    role: str = Field(..., description="Role of the message sender")
+class CreateMessageRequest(BaseModel):
+    # role: str = Field(..., description="Role of the message sender")
     content: str = Field(..., description="Content of the message")
 
     # Add a limit of 1 in future
     image_urls: Optional[List[str]] = Field(default=[], description="List of image URLs attached to the message") 
     
-    @field_validator('role')
-    def validate_role(cls, value):
-        if value not in CONVERSATION_ROLES:
-            raise ValueError('Role must be one of: user, assistant, system')
-        return value
+    # @field_validator('role')
+    # def validate_role(cls, value):
+    #     if value not in CONVERSATION_ROLES:
+    #         raise ValueError('Role must be one of: user, assistant, system')
+    #     return value
+    
+    @model_validator(mode='after')
+    def validate_content_or_images(self):
+        if not (self.content or len(self.image_urls)):
+            raise ValueError("Either content must be provided or image_urls must have at least one URL")
+        return self
 
-class SettingsRequest(BaseModel):
-    model: Optional[str] = Field(default=models['default'], description="LLM model to use")
+class CreateSettingsRequest(BaseModel):
+    # model: Optional[str] = Field(default=models['default'], description="LLM model to use")
     # temperature: Optional[float] = Field(default=0.7, ge=0, le=1, description="Temperature for model generation")
     # max_tokens: Optional[int] = Field(default=1000, gt=0, description="Maximum number of tokens for response") <- Defined by backend and user data
-    
-    @field_validator('model', mode='after')
-    def validate_model(cls, value):
-        if value not in models:
-            raise ValueError(f"Invalid model specification")
-        return value
+    topic: Topic = Field(default=Topic.DEFAULT, description="topic of the conversation")
+    # @field_validator('model', mode='after')
+    # def validate_model(cls, value):
+    #     if value not in models:
+    #         raise ValueError(f"Invalid model specification")
+    #     return value
 
 class CreateConversationRequest(BaseModel):
     title: str = Field(..., min_length=4, max_length=32, description="Title of the conversation")
-    settings: Optional[SettingsRequest] = Field(default_factory=SettingsRequest, description="Conversation settings")
+    settings: Optional[CreateSettingsRequest] = Field(default_factory=CreateSettingsRequest, description="Conversation settings")
     # metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional metadata") <- Maybe define by backend instead
-    message: MessagesRequest = Field(..., description="Initial message in the conversation")
+    message: CreateMessageRequest = Field(..., description="Initial message in the conversation")
 
     @field_validator('title')
     def validate_title(cls, value):
         if not TITLE_REGEX.match(value):
             raise ValueError("Title contains invalid characters")
         return value
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # class UpdateConversationSettingsRequest(BaseModel):
 #     model: Optional[str] = None

@@ -19,7 +19,6 @@ async def initialize_supabase():
 
 async def connect_mongodb():
     global mongo_client
-    print(settings.MONGODB_URI)
     mongo_client = AsyncIOMotorClient(settings.MONGODB_URI)
     await init_beanie(
         database=mongo_client.get_default_database(),
@@ -28,7 +27,8 @@ async def connect_mongodb():
 
 async def disconnect_mongodb():
     global mongo_client
-    mongo_client.close()
+    if mongo_client is not None:
+        mongo_client.close()
 
 
 def get_supabase():

@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
 
-class ImageRequest(BaseModel):
+class LlmRequest(BaseModel):
     topic: str
     image_urls: list[str]
 
 
-class ImageResponse(BaseModel):
+class LlmResponse(BaseModel):
     result: str

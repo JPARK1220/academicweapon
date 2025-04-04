@@ -1,27 +1,28 @@
+from typing import List
 from fastapi import HTTPException
-from llm.llm import get_llm_response
-from models import ImageRequest, ImageResponse
+from .models import LlmRequest, LlmResponse
+from .utils import Topic, get_model
+from openai import AsyncOpenAI
 
 # Todo: get_llm_response should be a service
 
-
 class LlmService:
-    def __init__(self):
-        pass
+    def __init__(self, client: AsyncOpenAI):
+        self.client = client
 
-    async def process(request: ImageRequest):
-        """
-        Process multiple images using the specialized LLM model.
-
-        Parameters:
-        - topic: The topic/subject area for specialization (e.g., "math")
-        - image_urls: List of URLs of the images to process
-
-        Returns:
-        - result: The LLM's response to the images
-        """
+    async def process(self, request: LlmRequest):
         try:
-            result = get_llm_response(request.topic, request.image_urls)
-            return ImageResponse(result=result)
+            result = await self.get_llm_response(request.topic, request.image_urls)
+            return LlmResponse(result=result)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    async def get_llm_response(self, topic: Topic, conversation: List):
+        response = await self.client.chat.completions.create(
+            model=get_model(topic),
+            messages=conversation,
+            max_completion_tokens=1000,
+        )
+        return response.choices[0].message.content
+    
+    # Make schema
