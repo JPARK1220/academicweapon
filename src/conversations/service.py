@@ -6,6 +6,7 @@ from src.conversations.schemas.settings import Settings
 from src.conversations.schemas.message import Message
 from src.conversations.utils import format_openai_message
 from src.llm.service import LlmService
+from src.llm.utils import get_expert_prompt, get_follow_up_questions_prompt
 
 class ConversationsService:
     def __init__(self, llm_service: LlmService):
@@ -18,7 +19,7 @@ class ConversationsService:
         )
 
         message = Message(
-            role="user",
+            role=create_conversation_request.message.role,
             content=create_conversation_request.message.content,
             image_urls=create_conversation_request.message.image_urls,
         )
@@ -70,9 +71,10 @@ class ConversationsService:
         await conversation.save()
         
         return {
-            "response": response,
+            "response": response, #llm response, i also need the user's image input
             "conversation": conversation,
         }
+
 
 
     async def get_conversation(self, user_id: str, conversation_id: str) -> Conversation:
@@ -85,4 +87,43 @@ class ConversationsService:
             raise Exception("Conversation was not found!")
 
         return conversation
+    
+
+
+
+
+
+    async def get_follow_up_questions(self, conversation: Conversation):
+        # conversation
+
+        # add follow up question prompt
+        message = Message(
+            role="system",
+            content=get_follow_up_questions_prompt(conversation.settings.topic),
+            image_urls=[],
+        )
+        conversation.messages.append(message)
+
+        # valid array
+        convo = [format_openai_message(msg) for msg in conversation.messages]
+
+        # ask model for follow up questions
+        follow_up_questions = await self.llm_service.get_llm_response(conversation.settings.topic, convo)
+
+        # return follow up questions
+        return follow_up_questions
+
+    async def create_expert_conversation(self, user_id: str, create_conversation_request: CreateConversationRequest):
+        create_conversation_request.message.role = "system"
+        create_conversation_request.message.content = get_expert_prompt(create_conversation_request.settings.topic)
+        conversation = await self.create_conversation(user_id, create_conversation_request)
+        follow_up_questions = await self.get_follow_up_questions(conversation)
+
+        return {
+            "conversation": conversation,
+            "follow_up_questions": follow_up_questions,
+        }
+    
         
+
+

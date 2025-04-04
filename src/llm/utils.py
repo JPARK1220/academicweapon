@@ -25,15 +25,31 @@ models = {
 }
 
 # Define the prompt template without f-string
-prompt_template = (
+expert_prompt_template = (
     "You are an expert on {topic}. Answer the problem(s) in the following image(s)."
 )
 
+follow_up_prompt_template = (
+    """You are an expert on {topic}.
+    Given this Q&A conversation, provide a list of 5 follow-up questions 
+    that the user could ask to understand the topic better in CSV format.
+
+    Output only the CSV string, with no introductory text or explanation.
+    The format should be:
+    question1,question2,question3
+    Do not enclose the questions in quotes.
+    """
+)
 
 def get_model(topic):
     return models[topic] if models[topic] else models["default"]
 
 
 # get_prompt("math")
-def get_prompt(topic):
-    return prompt_template.format(topic=topic)
+def get_expert_prompt(topic):
+    return expert_prompt_template.format(topic=topic)
+
+def get_follow_up_prompt(topic):
+    return follow_up_prompt_template.format(topic=topic)
+
+
