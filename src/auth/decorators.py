@@ -1,8 +1,9 @@
 from functools import wraps
-from fastapi import HTTPException, status, Request
+from fastapi import HTTPException, status
 
 from src.auth.models import User
-from .dependencies import AuthDependencies
+from src.auth.service import AuthService
+from .dependencies import get_auth_service
 
 
 def auth_guard(func):
@@ -36,10 +37,10 @@ def auth_guard(func):
         token = auth_header.replace("Bearer ", "")
 
         # Get auth service and verify token
-        auth_service = AuthDependencies.get_auth_service()
+        auth_service: AuthService = await get_auth_service()
         user = await auth_service.get_current_user_by_token(token)
 
-        # Store user in request.state instead of kwargs
+        # Can be accessed in request.state.user later on
         request.state.user = user
 
         return await func(*args, **kwargs)

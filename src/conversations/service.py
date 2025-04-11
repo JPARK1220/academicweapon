@@ -6,10 +6,16 @@ from src.conversations.schemas.settings import Settings
 from src.conversations.schemas.message import Message
 from src.conversations.utils import format_openai_message
 from src.llm.service import LlmService
+from src.llm.utils import get_prompt
 
 class ConversationsService:
     def __init__(self, llm_service: LlmService):
         self.llm_service = llm_service
+
+    async def create_problem_conversation(self, user_id: str, create_conversation_request: CreateConversationRequest):
+        create_conversation_request.message.role = "system"
+        create_conversation_request.message.content = get_prompt(create_conversation_request.settings.topic)
+        return await self.create_conversation(user_id, create_conversation_request)
     
     async def create_conversation(self, user_id: str, create_conversation_request: CreateConversationRequest):
         settings = Settings(
@@ -18,7 +24,7 @@ class ConversationsService:
         )
 
         message = Message(
-            role="user",
+            role=create_conversation_request.message.role,
             content=create_conversation_request.message.content,
             image_urls=create_conversation_request.message.image_urls,
         )
@@ -50,7 +56,7 @@ class ConversationsService:
             }
         except Exception as llm_error:
             raise Exception(f"Failed to get response from LLM: {str(llm_error)}")
-        
+
     async def create_message(self, user_id: str, conversation_id: str, create_message_request: CreateMessageRequest):
         conversation: Conversation = await self.get_conversation(user_id, conversation_id)
         message = Message(

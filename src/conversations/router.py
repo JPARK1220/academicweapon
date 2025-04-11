@@ -20,7 +20,7 @@ async def get_conversation(
 
 @router.post("/{conversation_id}")
 @auth_guard
-async def create_conversation(
+async def create_message(
     request: Request,
     conversation_id: str,
     create_message_request: CreateMessageRequest,

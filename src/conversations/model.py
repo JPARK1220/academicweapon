@@ -9,17 +9,17 @@ from src.llm.utils import Topic, models
 TITLE_REGEX = re.compile(STANDARD_CHARS_REGEX)
 
 class CreateMessageRequest(BaseModel):
-    # role: str = Field(..., description="Role of the message sender")
+    role: str = Field(..., description="Role of the message sender")
     content: str = Field(..., description="Content of the message")
 
     # Add a limit of 1 in future
     image_urls: Optional[List[str]] = Field(default=[], description="List of image URLs attached to the message") 
     
-    # @field_validator('role')
-    # def validate_role(cls, value):
-    #     if value not in CONVERSATION_ROLES:
-    #         raise ValueError('Role must be one of: user, assistant, system')
-    #     return value
+    @field_validator('role')
+    def validate_role(cls, value):
+        if value != "user":
+            raise ValueError('Role must be one of: user, assistant, system')
+        return value
     
     @model_validator(mode='after')
     def validate_content_or_images(self):
@@ -28,15 +28,8 @@ class CreateMessageRequest(BaseModel):
         return self
 
 class CreateSettingsRequest(BaseModel):
-    # model: Optional[str] = Field(default=models['default'], description="LLM model to use")
-    # temperature: Optional[float] = Field(default=0.7, ge=0, le=1, description="Temperature for model generation")
-    # max_tokens: Optional[int] = Field(default=1000, gt=0, description="Maximum number of tokens for response") <- Defined by backend and user data
+    # model, temperature, max_tokens - We probably won't use these parameters here as we want to abstract it away from the frontend.
     topic: Topic = Field(default=Topic.DEFAULT, description="topic of the conversation")
-    # @field_validator('model', mode='after')
-    # def validate_model(cls, value):
-    #     if value not in models:
-    #         raise ValueError(f"Invalid model specification")
-    #     return value
 
 class CreateConversationRequest(BaseModel):
     title: str = Field(..., min_length=4, max_length=32, description="Title of the conversation")

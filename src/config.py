@@ -1,5 +1,4 @@
-import os
-from pydantic import model_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 from src.constants import Environment
@@ -13,6 +12,10 @@ class Config(BaseSettings):
 
     MONGODB_URI: str
 
+    REDIS_HOST: str
+    REDIS_PORT: str
+    REDIS_PASSWORD: str
+
     SITE_DOMAIN: str = "localhost.com"
     ENVIRONMENT: Environment = Environment.DEVELOPMENT
 
@@ -25,6 +28,11 @@ class Config(BaseSettings):
     # CORS_ORIGINS_REGEX: str | None = None
 
     APP_VERSION: str = "1.0"
+
+    S3_ENDPOINT_URL: str
+    S3_ACCESS_KEY_ID: str
+    S3_SECRET_ACCESS_KEY: str
+    S3_BUCKET: str
 
     class Config:
         env_file = ".env"

@@ -5,9 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from src.auth.router import router as auth_router
 from src.conversations.router import router as conversation_router
-from src.database import connect_mongodb, disconnect_mongodb, initialize_supabase
+from src.images.router import router as image_router
+from src.database import connect_mongodb, disconnect_mongodb, disconnect_redis, initialize_bucket, initialize_supabase
 from src.config import settings
-
+import os
 
 # Lifespan context manager
 @asynccontextmanager
@@ -15,10 +16,11 @@ async def lifespan(app: FastAPI):
     # Any startup initialization
     await initialize_supabase()
     await connect_mongodb()
+    await initialize_bucket()
     yield
     # Any actions needed on shutdown
     disconnect_mongodb()
-
+    disconnect_redis()
 
 # FastAPI App Initialization
 async def not_found(request, exc):
@@ -61,8 +63,9 @@ async def health_check():
 
 app.include_router(auth_router)
 app.include_router(conversation_router)
+app.include_router(image_router)
 
-print("All registered routes:")
+print("Registered routes:")
 for route in app.routes:
     if hasattr(route, "methods"):
         methods = ', '.join(route.methods)
