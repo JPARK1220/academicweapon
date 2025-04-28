@@ -3,17 +3,21 @@ from typing import Optional, List
 import re
 
 from src.conversations.constants import CONVERSATION_ROLES, STANDARD_CHARS_REGEX
+from src.images.models import GetTemporaryImageUrlRequest
 from src.llm.utils import Topic, models
 
 # Constants
 TITLE_REGEX = re.compile(STANDARD_CHARS_REGEX)
+
+class CreateImageAttachmentRequest(GetTemporaryImageUrlRequest):
+    pass
 
 class CreateMessageRequest(BaseModel):
     role: str = Field(..., description="Role of the message sender")
     content: str = Field(..., description="Content of the message")
 
     # Add a limit of 1 in future
-    image_urls: Optional[List[str]] = Field(default=[], description="List of image URLs attached to the message") 
+    image_attachments: Optional[List[CreateImageAttachmentRequest]] = Field(default=[], description="List of image attachment requests attached to the message") 
     
     @field_validator('role')
     def validate_role(cls, value):
@@ -42,7 +46,7 @@ class CreateConversationRequest(BaseModel):
         if not TITLE_REGEX.match(value):
             raise ValueError("Title contains invalid characters")
         return value
-
+    
 
 
 

@@ -6,7 +6,7 @@ import uvicorn
 from src.auth.router import router as auth_router
 from src.conversations.router import router as conversation_router
 from src.images.router import router as image_router
-from src.database import connect_mongodb, disconnect_mongodb, disconnect_redis, initialize_bucket, initialize_supabase
+from src.database import connect_mongodb, disconnect_mongodb, disconnect_redis, initialize_bucket, initialize_redis, initialize_supabase
 from src.config import settings
 import os
 
@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
     await initialize_supabase()
     await connect_mongodb()
     await initialize_bucket()
+    await initialize_redis()
     yield
     # Any actions needed on shutdown
     disconnect_mongodb()
