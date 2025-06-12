@@ -7,12 +7,10 @@ class UserSignup(BaseModel):
     password: str
     name: Optional[str] = None
 
-
 class SignupResponse(BaseModel):
     user_id: Optional[str] = None
     message: str
     success: bool
-
 
 class LoginRequest(BaseModel):
     email: EmailStr

@@ -6,7 +6,7 @@ import uvicorn
 from src.auth.router import router as auth_router
 from src.conversations.router import router as conversation_router
 from src.images.router import router as image_router
-from src.database import connect_mongodb, disconnect_mongodb, disconnect_redis, initialize_bucket, initialize_redis, initialize_supabase
+from src.database import disconnect_postgres, disconnect_redis, initialize_bucket, initialize_postgres, initialize_redis, initialize_supabase
 from src.config import settings
 import os
 
@@ -15,13 +15,13 @@ import os
 async def lifespan(app: FastAPI):
     # Any startup initialization
     await initialize_supabase()
-    await connect_mongodb()
+    await initialize_postgres()
     await initialize_bucket()
     await initialize_redis()
     yield
     # Any actions needed on shutdown
-    disconnect_mongodb()
-    disconnect_redis()
+    await disconnect_redis()
+    await disconnect_postgres()
 
 # FastAPI App Initialization
 async def not_found(request, exc):

@@ -1,17 +1,14 @@
 from contextlib import asynccontextmanager
 import aioboto3
 from supabase import create_async_client
-from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import init_beanie
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from src.config import settings
-from src.conversations.schemas.conversation import Conversation
-from src.conversations.schemas.message import Message
-from src.conversations.schemas.settings import Settings
 import redis.asyncio as redis
 
 # Global variable
 supabase = None
-mongo_client = None
+postgres_engine = None
+postgres_session = None
 bucket = None
 session = None
 
@@ -21,18 +18,15 @@ async def initialize_supabase():
         supabase_url=settings.SUPABASE_URL, supabase_key=settings.SUPABASE_KEY
     )
 
-async def connect_mongodb():
-    global mongo_client
-    mongo_client = AsyncIOMotorClient(settings.MONGODB_URI)
-    await init_beanie(
-        database=mongo_client.get_default_database(),
-        document_models=[Conversation],  # List all Beanie Document models
-    )
+async def initialize_postgres():
+    global postgres_engine, postgres_session
+    postgres_engine = create_async_engine(settings.POSTGRES_URL, echo=True)
+    postgres_session = async_sessionmaker(postgres_engine, expire_on_commit=False)
 
-def disconnect_mongodb():
-    global mongo_client
-    if mongo_client is not None:
-        mongo_client.close()
+async def disconnect_postgres():
+    global postgres_engine
+    if postgres_engine:
+        await postgres_engine.dispose()
 
 async def initialize_redis():
     global redis_client
@@ -86,3 +80,14 @@ def get_redis():
 
 def get_supabase():
     return supabase
+
+def get_postgres_session():
+    return postgres_session
+
+
+# Extra setup for SqlAlcehmy
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import AsyncAttrs
+
+class Base(AsyncAttrs, DeclarativeBase):
+    pass

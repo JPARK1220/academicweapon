@@ -2,6 +2,6 @@ from enum import Enum
 
 
 class Environment(str, Enum):
-    DEVELOPMENT = "DEVELOPMENT"
+    DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"

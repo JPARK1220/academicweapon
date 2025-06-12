@@ -2,9 +2,9 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, List
 import re
 
-from src.conversations.constants import CONVERSATION_ROLES, STANDARD_CHARS_REGEX
+from src.conversations.constants import STANDARD_CHARS_REGEX
 from src.images.models import GetTemporaryImageUrlRequest
-from src.llm.utils import Topic, models
+from src.llm.utils import Role, Model
 
 # Constants
 TITLE_REGEX = re.compile(STANDARD_CHARS_REGEX)
@@ -13,27 +13,21 @@ class CreateImageAttachmentRequest(GetTemporaryImageUrlRequest):
     pass
 
 class CreateMessageRequest(BaseModel):
-    role: str = Field(..., description="Role of the message sender")
+    role: Role = Field(..., description="Role of the message sender")
+    model: Optional[Model] = Field(..., description="Model to be used")
     content: str = Field(..., description="Content of the message")
 
-    # Add a limit of 1 in future
-    image_attachments: Optional[List[CreateImageAttachmentRequest]] = Field(default=[], description="List of image attachment requests attached to the message") 
-    
-    @field_validator('role')
-    def validate_role(cls, value):
-        if value != "user":
-            raise ValueError('Role must be one of: user, assistant, system')
-        return value
-    
+    attachments: Optional[List[CreateImageAttachmentRequest]] = Field(default=[], description="List of image attachment requests attached to the message") 
+
     @model_validator(mode='after')
     def validate_content_or_images(self):
-        if not (self.content or len(self.image_urls)):
-            raise ValueError("Either content must be provided or image_urls must have at least one URL")
+        if not (self.content or len(self.attachments)):
+            raise ValueError("Either content must be provided or attachments must have at least one key")
         return self
 
 class CreateSettingsRequest(BaseModel):
     # model, temperature, max_tokens - We probably won't use these parameters here as we want to abstract it away from the frontend.
-    topic: Topic = Field(default=Topic.DEFAULT, description="topic of the conversation")
+    model: Model = Field(default=Model.DEFAULT, description="topic of the conversation")
 
 class CreateConversationRequest(BaseModel):
     title: str = Field(..., min_length=4, max_length=32, description="Title of the conversation")

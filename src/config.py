@@ -10,7 +10,7 @@ class Config(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_KEY: str
 
-    MONGODB_URI: str
+    POSTGRES_URL: str
 
     REDIS_HOST: str
     REDIS_PORT: str

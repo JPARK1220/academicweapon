@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class LlmRequest(BaseModel):
-    topic: str
+    model: str
     image_urls: list[str]
 
 

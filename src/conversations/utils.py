@@ -1,6 +1,6 @@
 from typing import List
 from src.conversations.model import CreateImageAttachmentRequest
-from src.conversations.schemas.message import Message
+from src.conversations.entities.message import Message
 from src.images.utils import create_file_key
 
 def attach_images(self, user_id: str, image_attachment_list: List[CreateImageAttachmentRequest]):

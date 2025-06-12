@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 from functools import lru_cache
 import os
 
-load_dotenv()
-
 @lru_cache()
 def get_openai_client():
     return AsyncOpenAI(

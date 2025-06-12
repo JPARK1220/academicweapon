@@ -1,106 +1,111 @@
+import select
 from typing import Dict, Union
-from beanie import PydanticObjectId
-from src.conversations.model import CreateConversationRequest, CreateImageAttachmentRequest, CreateMessageRequest
-from src.conversations.schemas.conversation import Conversation
-from src.conversations.schemas.settings import Settings
-from src.conversations.schemas.message import Message
-from src.conversations.utils import attach_images, format_openai_message
+
+from fastapi import HTTPException
+from src.conversations.entities.conversation_message import ConversationMessage
+from src.conversations.model import CreateConversationRequest, CreateMessageRequest
+from src.conversations.entities.conversation import Conversation
+from src.conversations.entities.message import Message
 from src.images.service import ImagesService
 from src.llm.service import LlmService
-from src.llm.utils import get_prompt
+
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.llm.utils import Role, Model, get_model
 
 class ConversationsService:
     def __init__(self, llm_service: LlmService, images_service: ImagesService):
         self.llm_service = llm_service
-        self.images_service = images_service
-
-    async def create_problem_conversation(self, user_id: str, create_conversation_request: CreateConversationRequest):
-        create_conversation_request.message.role = "system"
-        create_conversation_request.message.content = get_prompt(create_conversation_request.settings.topic)
-        return await self.create_conversation(user_id, create_conversation_request)
+        # self.images_service = images_service
     
-    async def create_conversation(self, user_id: str, create_conversation_request: CreateConversationRequest):
-        settings = Settings(
-            # model = create_conversation_request.settings.model,
-            topic = create_conversation_request.settings.topic,
+    async def create_conversation(self, session: AsyncSession, user_id: str, create_conversation_request: CreateConversationRequest):
+
+        conversation = Conversation(
+            user_id = user_id,
+            title=create_conversation_request.title,
+            settings=create_conversation_request.settings.model_dump()
         )
 
-        image_keys = attach_images(user_id, create_conversation_request.message.image_attachments)
+        session.add(conversation)
+        await session.flush()
 
-        message = Message(
-            role=create_conversation_request.message.role,
-            content=create_conversation_request.message.content,
-            image_keys=image_keys,
+        # Set model from settings
+        create_conversation_request.message.model = create_conversation_request.settings.model
+
+        result = await self.create_message(
+            session=session,
+            user_id=user_id, 
+            conversation_id=str(conversation.id),
+            create_message_request=create_conversation_request.message
         )
-
-        try:
-            formatted_message = await self.format_openai_message(message)
-            response = await self.llm_service.get_llm_response(settings.topic, [formatted_message])
-            # response = formatted_message
-            
-            assistant_message = Message(
-                role="assistant",
-                content=response,
-                image_keys=[]
-            )
-            conversation = Conversation(
-                user_id=user_id,
-                title=create_conversation_request.title,
-                settings=settings,
-                messages=[message, assistant_message]
-            )
-            try:
-                await conversation.save()
-            except Exception as db_error:
-                # Database save failed
-                raise Exception(f"Failed to save conversation: {str(db_error)}")
-            return {
-                "response": response,
-                "conversation": conversation,
-            }
-        except Exception as llm_error:
-            raise Exception(f"Failed to get response from LLM: {str(llm_error)}")
-
-    async def create_message(self, user_id: str, conversation_id: str, create_message_request: CreateMessageRequest):
-        conversation: Conversation = await self.get_conversation(user_id, conversation_id)
-        image_keys = attach_images(user_id, create_message_request.image_attachments)
-        message = Message(
-            role="user",
-            content=create_message_request.content,
-            image_keys=image_keys,
-        )
-        conversation.messages.append(message)
-        convo = [await self.format_openai_message(msg) for msg in conversation.messages]
-        response = await self.llm_service.get_llm_response(conversation.settings.topic, convo)
-        conversation.messages.append(Message(
-            role="assistant",
-            content=response,
-            image_keys=[]
-        ))
-
-        await conversation.save()
         
-        return {
-            "response": response,
-            "conversation": conversation,
-        }
+        return result
+        
+    async def create_message(self, session: AsyncSession, user_id: str, conversation_id: str, create_message_request: CreateMessageRequest):
+        conversation = await self.get_conversation(session, user_id, conversation_id)
+        
+        user_message = Message(role=Role.USER, content=create_message_request.content)
+        
+        try:
+            openai_conversation = []
+            for cm in conversation.conversation_messages:
+                openai_conversation.append(await self._format_openai_message(user_id, cm.message))
+            openai_conversation.append(await self._format_openai_message(user_id, user_message))
 
-    async def get_conversation(self, user_id: str, conversation_id: str) -> Conversation:
-        # check if user owns conversation 
-        conversation = await Conversation.find_one({
-            "_id": PydanticObjectId(conversation_id),
-            "user_id": user_id
-        })
-        if conversation == None:
-            raise Exception("Conversation was not found!")
+            response = await self.llm_service.generate_llm_response(get_model(create_message_request.model), openai_conversation) # TODO CHANGE THIS LOGIC, GET MODEL SETTING LOGIC >>>
+            
+            assistant_message = Message(role=Role.ASSISTANT, content=response)
+            base_order_index = len(conversation.conversation_messages)
+            await self._add_message_to_conversation(session, conversation, user_message, base_order_index)
+            await self._add_message_to_conversation(session, conversation, assistant_message, base_order_index + 1)
+            
+            await session.commit()
+            
+        except Exception:
+            await session.rollback()
+            raise
+        
+        return {"user_message": user_message, "assistant_message": assistant_message}
+    
+    async def _add_message_to_conversation(self, session: AsyncSession, conversation: Conversation, message: Message, index: int):
+        session.add(message)
+        await session.flush()
+        
+        conv_message = ConversationMessage(
+            conversation_id=conversation.id,
+            message_id=message.id,
+            order_index=index
+        )
+        session.add(conv_message)
 
+    async def get_conversation(self, session: AsyncSession, user_id: str, conversation_id: str) -> Conversation:
+        result = await session.execute(
+            select(Conversation)
+            .options(selectinload(Conversation.conversation_messages).selectinload(ConversationMessage.message))
+            .where(
+                Conversation.id == conversation_id,
+                Conversation.user_id == user_id
+            )
+        )
+
+        conversation = result.scalar_one_or_none()
+
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="Item not found")
+        
         return conversation
     
-    async def format_openai_message(self, user_id: str, message: Message) -> Dict[str, Union[str, list]]:
+
+    async def _create_conversation_query(self, session: AsyncSession):
+        pass
+
+    async def _format_openai_message(self, user_id: str, message: Message) -> Dict[str, Union[str, list]]:
         message_obj = {}
         message_obj["role"] = message.role
-        
-        if (len(message.image_keys) == 0):
+          
+        if (True): # Attachment checl
             message_obj["content"] = message.content
         
         else:
