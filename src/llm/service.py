@@ -11,11 +11,12 @@ class LlmService:
     async def process(self, request: LlmRequest):
         try:
             result = await self.generate_llm_response(request.model, request.image_urls)
+            if not result: raise Exception()
             return LlmResponse(result=result)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def generate_llm_response(self, model: str, conversation: List[Dict]):
+    async def generate_llm_response(self, model: str, conversation: List[str]):
         response = await self.client.chat.completions.create(
             model=model,
             messages=conversation,

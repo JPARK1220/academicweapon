@@ -19,5 +19,5 @@ VIEW_EXPIRATION = 259200 # 3 days
 
 class LifecycleStatus(str, Enum):
     PENDING = "pending"
-    PROCESSED = "jpeg"
+    PROCESSED = "processed"
     COMPLETED = "completed"

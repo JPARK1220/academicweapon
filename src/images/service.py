@@ -27,7 +27,7 @@ class ImagesService:
                 },
                 ExpiresIn=UPLOAD_EXPIRATION
             )
-            return {"presigned_url": presigned_url}
+            return {"presigned_url": presigned_url, "key": file_key}
 
     async def get_temporary_image_url_with_key(self, file_key: str) -> str:
         urls = await self._get_presigned_urls([file_key])

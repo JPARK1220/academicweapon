@@ -13,7 +13,7 @@ class Config(BaseSettings):
     POSTGRES_URL: str
 
     REDIS_HOST: str
-    REDIS_PORT: str
+    REDIS_PORT: int
     REDIS_PASSWORD: str
 
     SITE_DOMAIN: str = "localhost.com"
